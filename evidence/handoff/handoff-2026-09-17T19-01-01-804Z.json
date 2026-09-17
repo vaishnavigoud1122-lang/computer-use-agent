@@ -1,0 +1,13 @@
+{
+  "goal": "Look up member 10001 and return their current balance.",
+  "currentStep": "Waiting for human intervention.",
+  "reason": "agent_uncertain",
+  "stateBeforeHandoff": "agent_running",
+  "stateAfterHandoff": "paused_for_human",
+  "urlBeforeHandoff": "http://localhost:4000/members/search",
+  "humanControlStartedAt": "2026-09-17T19:00:57.702Z",
+  "humanControlEndedAt": "2026-09-17T19:01:01.803Z",
+  "urlAfterHumanIntervention": "http://localhost:4000/members/search",
+  "resumedAt": "2026-09-17T19:01:01.803Z",
+  "completedAt": "2026-09-17T19:01:01.803Z"
+}
