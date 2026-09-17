@@ -478,94 +478,73 @@ export class ReplayEngine {
 
   private async findTarget(
     target?: Artifact["steps"][number]["target"],
-  ): Promise<Locator> {
+    attachTimeoutMs = 2000,
+  ) {
     if (!target) {
-      throw new Error(
-        "Step is missing a target.",
-      );
+      throw new Error("Step is missing a target.");
     }
 
-    const strategies = [
-      target,
-      ...(target.fallback ?? []),
-    ];
+    const strategies = [target, ...(target.fallback ?? [])];
 
-    let lastError: unknown;
+    let lastError;
 
     for (const strategy of strategies) {
       try {
-        console.log(
-          `[LOCATOR] Trying ${strategy.type}: ${strategy.value}`,
-        );
+        console.log(`[LOCATOR] Trying ${strategy.type}: ${strategy.value}`);
+
+        let locator;
 
         switch (strategy.type) {
           case "role": {
-            const parts =
-              strategy.value.split(":");
-
+            const parts = strategy.value.split(":");
             const role = parts[0];
+            const name = parts.slice(1).join(":");
 
-            const name =
-              parts.slice(1).join(":");
+            locator =
+              role === "button" && name
+                ? this.page.getByRole("button", { name })
+                : this.page.getByRole(role as any);
 
-            if (
-              role === "button" &&
-              name
-            ) {
-              return this.page.getByRole(
-                "button",
-                {
-                  name,
-                },
-              );
-            }
-
-            return this.page.getByRole(
-              role as any,
-            );
+            break;
           }
 
           case "text":
-            return this.page.getByText(
-              strategy.value,
-            );
+            locator = this.page.getByText(strategy.value);
+            break;
 
           case "label":
-            return this.page.getByLabel(
-              strategy.value,
-            );
+            locator = this.page.getByLabel(strategy.value);
+            break;
 
           case "css":
-            return this.page.locator(
-              strategy.value,
-            );
+            locator = this.page.locator(strategy.value);
+            break;
 
           case "xpath":
-            return this.page.locator(
-              `xpath=${strategy.value}`,
-            );
+            locator = this.page.locator(`xpath=${strategy.value}`);
+            break;
 
           case "iframe":
-            throw new Error(
-              "Iframe targets are not supported by this replay version.",
-            );
+            throw new Error("Iframe targets are not supported by this replay version.");
 
           default:
-            throw new Error(
-              `Unsupported locator type: ${strategy.type}`,
-            );
+            throw new Error(`Unsupported locator type: ${strategy.type}`);
         }
+
+        await locator.waitFor({
+          state: "attached",
+          timeout: attachTimeoutMs,
+        });
+
+        return locator;
       } catch (error) {
         lastError = error;
       }
     }
 
-    throw new Error(
-      `Could not find target. Last error: ${String(
-        lastError,
-      )}`,
-    );
+    throw new Error(`Could not find target. Last error: ${String(lastError)}`);
   }
+
 
   private async verifyCheckpoint(
     checkpoint: string,
